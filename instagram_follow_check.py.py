@@ -2,13 +2,19 @@ import os
 import json
 import csv
 
-def extract_users_with_links(data_list):
+def extract_users_with_links(data_list, use_title=False):
     users = {}
     for entry in data_list:
         try:
-            string_data = entry["string_list_data"][0]
-            username = string_data["value"]
-            link = string_data["href"]
+            if use_title:
+                # For following.json: username is in "title"
+                username = entry["title"]
+                link = entry["string_list_data"][0]["href"]
+            else:
+                # For followers.json: username is in string_list_data[0]["value"]
+                string_data = entry["string_list_data"][0]
+                username = string_data["value"]
+                link = string_data["href"]
             users[username] = link
         except (KeyError, IndexError):
             continue
@@ -28,7 +34,7 @@ followers = extract_users_with_links(followers_data)
 with open(following_path, 'r') as f:
     following_raw = json.load(f)
 following_data = following_raw.get("relationships_following", [])
-following = extract_users_with_links(following_data)
+following = extract_users_with_links(following_data, use_title=True)
 
 # Determine relationships
 not_following_back = {
